@@ -79,9 +79,9 @@ async def get_favorite_apartment_ids(
 
 
 @router.get("/favorite/apartments")
-@limiter.limit(f"{LIMIT}/minute")  # 👈 не более 10 запросов в минуту с одного IP
+#@limiter.limit(f"{LIMIT}/minute")  # 👈 не более 10 запросов в минуту с одного IP
 async def get_favorite_apartments(
-    request: Request,
+    #request: Request,
     db: AsyncSession = Depends(get_db),
     user_email: str = Depends(get_current_user)
 ):

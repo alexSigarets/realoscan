@@ -44,6 +44,11 @@ export function handleFavoriteButton(card, apartmentId, isFavorited = false) {
                 : "/static/icons/icon-bookmark-defult.png";
 
             showToast(`${data.message}`);
+
+            // 🧹 Если карточка была в избранном и теперь удалена — скрываем
+            if (!isNowActive && window.location.pathname.includes("favorite")) {
+                card.remove();
+            }    
         } catch (err) {
             console.error("Chyba při komunikaci se serverem:", err);
             showToast("Chyba spojení se serverem", "error");

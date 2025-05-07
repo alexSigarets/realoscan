@@ -7,11 +7,13 @@ import { setupSlider } from "./slider.js";
 import { handleFavoriteButton } from "./favorites.js";
 
 export async function renderApartments(apartments, favoriteIds = [], response = 0) {
+
+    
     const container = document.getElementById("properties");
     container.innerHTML = "";
 
     const noResultsEl = document.getElementById("no-results");
-    if (apartments.length === 0 || response.status === 429) {
+    if (apartments.length === 0) {
         noResultsEl.classList.remove("hidden");
         return;
     } else {
@@ -44,7 +46,7 @@ export async function renderApartments(apartments, favoriteIds = [], response = 
         const sliderHtml = `
             <div class="photo-slider">
                 ${photos.map((photo, index) => `
-                    <img src="${photo}" style="display: ${index === 0 ? 'block' : 'none'};" alt="Foto bytu">
+                    <img src="${photo}" class="${index === 0 ? 'active' : ''}" alt="Foto bytu">
                 `).join('')}
                 ${photos.length > 1 ? `
                     <button class="prev-btn">&#10094;</button>
@@ -72,8 +74,11 @@ export async function renderApartments(apartments, favoriteIds = [], response = 
             </div>
 
             <div class="actions">
-                <button class="favorite-btn" data-id="${apartment.id}" data-active="false">
-                    <img src="/static/icons/icon-bookmark-defult.png" alt="Oblíbené" class="heart-icon">
+                <button class="favorite-btn btn" data-id="${apartment.id}" data-active="false">
+                    <img src="/static/icons/icon-bookmark-defult.png" alt="Oblíbené" class="heart-icon" title="Oblíbené">
+                </button>
+                <button class="search-btn btn" data-telefon="${apartment.Telefon || null}" data-email="${apartment.Email || null}" data-id = "${apartment.id}">
+                    <img src="/static/icons/free-icon-search.png" alt="Zobrazit další inzeráty tohoto majitele" class="heart-icon" title="Zobrazit další inzeráty tohoto majitele">
                 </button>
             </div>
         `;

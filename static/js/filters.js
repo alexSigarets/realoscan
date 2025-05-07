@@ -6,18 +6,16 @@
 import { Activita, RealityType, RegionId } from "./constants.js";
 import { showPreloader, hidePreloader, updateApartmentCount} from "./utils.js";
 import { renderApartments } from './apartments.js'
-import { fetchApartments} from './main.js'
+import { fetchApartments, renderPagination} from './main.js'
 
 
 
 // Заполнение фильтров
-export function renderActivityFilter(apartments, response) {
+export function renderActivityFilter(apartments) {
     const activitySelect = document.getElementById("aktivita");
     activitySelect.innerHTML = '<option value="0">Nezáleží</option>';
 
-    if(response.status === 429){
-        return
-    }
+    
 
     const uniqueActivities = new Set();
 
@@ -43,13 +41,11 @@ export function renderActivityFilter(apartments, response) {
 }
 
 
-export function renderRealityTypeFilter(apartments, response) {
+export function renderRealityTypeFilter(apartments) {
     const realityTypeSelect = document.getElementById("druh");
     realityTypeSelect.innerHTML = '<option value="0">Nezáleží</option>';
 
-    if(response.status === 429){
-        return
-    }
+    
 
     const uniqueRealityTypes = new Set();
 
@@ -74,13 +70,11 @@ export function renderRealityTypeFilter(apartments, response) {
 }
 
 
-export function renderRegionTypeFilter(apartments, response) {
+export function renderRegionTypeFilter(apartments) {
     const regionSelect = document.getElementById("kraj");
     regionSelect.innerHTML = '<option value="0">Nezáleží</option>';
 
-    if(response.status === 429){
-        return
-    }
+    
 
     const uniqueRegions = new Set();
 
@@ -107,8 +101,72 @@ export function renderRegionTypeFilter(apartments, response) {
 
 
 // Новая фильтрация (серверная):
-export async function fetchFilteredApartments(favoriteIds) {
+// export async function fetchFilteredApartments(favoriteIds, page = 1) {
+//     const params = new URLSearchParams();
+
+//     // Чтение фильтров
+//     const activity = document.getElementById("aktivita").value;
+//     const realityType = document.getElementById("druh").value;
+//     const region = document.getElementById("kraj").value;
+//     const district = document.getElementById("okres").value;
+
+//     const pragueCheckboxes = document.querySelectorAll("#praha-checkboxes input[type='checkbox']:checked");
+//     const praguePart = pragueCheckboxes.length > 0 ? pragueCheckboxes[0].dataset.pragueid : null;
+
+//     // Добавляем параметры только если они реально выбраны
+//     if (activity && activity !== "0") {
+//         params.set("activity", activity);
+//     }
+
+//     if (realityType && realityType !== "0") {
+//         params.set("reality_type", realityType);
+//     }
+
+//     if (region && region !== "0") {
+//         params.set("region_id", region);
+//     }
+
+//     if (district && district !== "0" && district !== "" && district !== null) {
+//         params.set("district_id", district);
+//     }
+
+//     if (region === "1" && pragueCheckboxes.length > 0) {
+//         Array.from(pragueCheckboxes)
+//             .map(cb => cb.dataset.pragueid)
+//             .filter(Boolean)
+//             .forEach(id => {
+//                 params.append("prague_id", id); // ⬅️ append вместо set + join
+//             });
+//     }
+
+//     try {
+//         showPreloader();
+//         const response = await fetch(`apartments/?${params.toString()}`);
+//         const data = await response.json();
+
+//         const apartments = data.items
+
+//         renderApartments(apartments, favoriteIds);
+//         updateApartmentCount(apartments.length);
+
+//         // обновить URL в браузере
+//         const newUrl = new URL(window.location.href);
+//         newUrl.search = params.toString();
+//         window.history.replaceState({}, '', newUrl);
+//     } catch (error) {
+//         console.error("Ошибка загрузки фильтрованных квартир:", error);
+//     }finally{
+//         hidePreloader();
+//     }
+// }
+
+export async function fetchFilteredApartments(favoriteIds, page = 1) {
     const params = new URLSearchParams();
+
+    const limit = 20;
+    const offset = (page - 1) * limit;
+    params.set("skip", offset);
+    params.set("limit", limit);
 
     // Чтение фильтров
     const activity = document.getElementById("aktivita").value;
@@ -119,19 +177,9 @@ export async function fetchFilteredApartments(favoriteIds) {
     const pragueCheckboxes = document.querySelectorAll("#praha-checkboxes input[type='checkbox']:checked");
     const praguePart = pragueCheckboxes.length > 0 ? pragueCheckboxes[0].dataset.pragueid : null;
 
-    // Добавляем параметры только если они реально выбраны
-    if (activity && activity !== "0") {
-        params.set("activity", activity);
-    }
-
-    if (realityType && realityType !== "0") {
-        params.set("reality_type", realityType);
-    }
-
-    if (region && region !== "0") {
-        params.set("region_id", region);
-    }
-
+    if (activity && activity !== "0") params.set("activity", activity);
+    if (realityType && realityType !== "0") params.set("reality_type", realityType);
+    if (region && region !== "0") params.set("region_id", region);
     if (district && district !== "0" && district !== "" && district !== null) {
         params.set("district_id", district);
     }
@@ -140,26 +188,31 @@ export async function fetchFilteredApartments(favoriteIds) {
         Array.from(pragueCheckboxes)
             .map(cb => cb.dataset.pragueid)
             .filter(Boolean)
-            .forEach(id => {
-                params.append("prague_id", id); // ⬅️ append вместо set + join
-            });
+            .forEach(id => params.append("prague_id", id));
     }
 
     try {
         showPreloader();
+
         const response = await fetch(`apartments/?${params.toString()}`);
         const data = await response.json();
 
-        renderApartments(data, favoriteIds);
-        updateApartmentCount(data.length);
+        const apartments = data.items;
+        const total = data.total;
 
-        // обновить URL в браузере
+        renderApartments(apartments, favoriteIds);
+        updateApartmentCount(total);
+
+        // 🟢 Обновляем URL
         const newUrl = new URL(window.location.href);
         newUrl.search = params.toString();
+        newUrl.searchParams.set("page", page);
         window.history.replaceState({}, '', newUrl);
+
+        renderPagination(total, page); // 👈 добавим пагинацию
     } catch (error) {
         console.error("Ошибка загрузки фильтрованных квартир:", error);
-    }finally{
+    } finally {
         hidePreloader();
     }
 }
@@ -228,6 +281,5 @@ export function restoreFiltersFromURL() {
         }
     }
 
-    // Всегда применяем фильтры один раз (после восстановления значений)
-    // fetchFilteredApartments();
+    
 }

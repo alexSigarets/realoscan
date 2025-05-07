@@ -1,10 +1,10 @@
 #JS обращается сюда с запросом, этот скрипт формирует запрос и отправляет его в serveses/apartment_servise.py
 
-from fastapi import APIRouter, Query, Request
+from fastapi import APIRouter, Query, Request, HTTPException
 from sqlalchemy import select
 from database.database import async_session
 from models.apartment import Apartment  # Модель апартаментов (мы её тоже сейчас сделаем)
-from services.apartment_service import get_apartments
+from services.apartment_service import get_apartments, get_apartments_by_owner, get_total_apartment_count
 from typing import Optional, List
 from core.limiter import limiter
 import os
@@ -37,9 +37,9 @@ async def get_apartments_list():
 
 # Новая функция выборки квартир по GET параметрам
 @router.get("/apartments/")
-@limiter.limit(f"{LIMIT}/minute")  # 👈 не более 10 запросов в минуту с одного IP
+#@limiter.limit(f"{LIMIT}/minute")  # 👈 не более 10 запросов в минуту с одного IP
 async def get_apartments_list(
-    request: Request,
+    #request: Request,
     skip: int = 0,
     limit: int = 20,
     activity: int = Query(0),
@@ -57,4 +57,24 @@ async def get_apartments_list(
     }
 
     apartments = await get_apartments(skip=skip, limit=limit, filters=filters)
+    total = await get_total_apartment_count(filters=filters)
+    return {
+        "items": [apartment.to_dict() for apartment in apartments],
+        "total": total
+    }
+
+
+
+
+@router.get("/apartments/by-owner")
+async def get_apartments_by_owner_endpoint(
+    phone: Optional[str] = Query(None),
+    email: Optional[str] = Query(None),
+    id: Optional[str] = Query(None)
+):
+    if not phone and not email:
+        raise HTTPException(status_code=400, detail="Musí být zadán telefon nebo email.")
+
+    apartments = await get_apartments_by_owner(phone=phone, email=email, id=id)
     return [apartment.to_dict() for apartment in apartments]
+

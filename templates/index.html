@@ -10,7 +10,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="static/favicon/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="static/favicon/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="static/favicon/favicon-16x16.png">
-    <link rel="manifest" href="static/favicon/site.webmanifest">
+    
 </head>
 <body>
     <div id="toast-container"></div>
@@ -24,7 +24,8 @@
         </div>
         <nav>
             <a href="/favorites" class="admin-btn">Moje oblíbené</a>
-            <button class="admin-btn" id="adminRegisterBtn">Admin registrace</button>
+            <button class="admin-btn" id="adminRegisterBtn" style="display: none;">Admin registrace</button>
+            <button class="admin-btn" id="logoutBtn">Odhlásit se</button>
         </nav>
     </div>
 </header>
@@ -126,6 +127,7 @@
             </div>
         </div> -->
     </main>
+    <div id="pagination" class="pagination-wrapper"></div>
 </div>
 
 <div id="preloader" class="preloader hidden">
@@ -140,14 +142,6 @@
 
 <!-- <script type="module" src="/static/app.js"></script> -->
 <script type="module" src="/static/js/main.js"></script>
-<script>
-    // Проверяем наличие токена
-    const token = localStorage.getItem('token');
-    if (!token) {
-        window.location.href = '/login'; // Если нет токена - отправляем на логин
-    }
 
-    // Тут ты можешь делать запросы к серверу, передавая токен в заголовках
-</script>
 </body>
 </html>

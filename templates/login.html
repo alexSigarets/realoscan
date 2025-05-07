@@ -6,102 +6,163 @@
     <title>Přihlášení - RealoScan</title>
     <link rel="stylesheet" href="/static/style.css">
     <style>
-        body {
-            margin: 0;
-            background-color: #eef4f9;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }       
-
-        .login-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center; /* добавляем! */
-            width: 100%;
-            max-width: 400px;
-            padding: 20px;
+        * {
+          box-sizing: border-box;
         }
-
-        .logo-block img {
-            width: 280px;
-            max-width: 90%;
+    
+        html, body {
+          margin: 0;
+          padding: 0;
+          height: 100%;
+          font-family: 'Roboto', Arial, sans-serif;
+          background-color: #eef4f9;
+          color: #333;
+          display: flex;
+          flex-direction: column;
         }
-
+    
+        header, footer {
+          background-color: #1976d2;
+          color: white;
+          text-align: center;
+          padding: 20px 0;
+        }
+    
+        main {
+          flex: 1;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+    
         .login-container {
-            background: #fff;
-            padding: 40px 30px;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
+          background: white;
+          border-radius: 16px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+          padding: 40px 30px;
+          width: 100%;
+          max-width: 500px;
+          text-align: center;
         }
-
+    
         .login-container h2 {
-            margin-bottom: 24px;
-            font-size: 28px;
-            color: #1976d2;
+          margin-bottom: 24px;
+          font-size: 28px;
+          color: #1976d2;
         }
-
+    
         .login-container input {
-            width: 100%;
-            padding: 14px;
-            margin-bottom: 20px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 16px;
-            box-sizing: border-box; /* добавляем обязательно! */
+          width: 100%;
+          padding: 14px;
+          margin-bottom: 20px;
+          border: 1px solid #ccc;
+          border-radius: 8px;
+          font-size: 16px;
         }
-
+    
         .login-container button {
-            width: 100%;
-            background-color: #1976d2;
-            color: white;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background-color 0.3s;
+          width: 100%;
+          background-color: #1976d2;
+          color: white;
+          padding: 14px;
+          border: none;
+          border-radius: 8px;
+          font-size: 16px;
+          font-weight: bold;
+          cursor: pointer;
+          transition: background-color 0.3s;
         }
-
+    
         .login-container button:hover {
-            background-color: #1565c0;
+          background-color: #1565c0;
         }
 
-        .error-message {
-            color: red;
-            margin-bottom: 20px;
-            display: none;
-            font-size: 14px;
+        .password-wrapper {
+          position: relative;
         }
-    </style>
+
+        .password-wrapper input {
+          width: 100%;
+          padding-right: 40px; /* место для глазика */
+        }
+
+        .toggle-password {
+          position: absolute;
+          right: 12px;
+          top: 35%;
+          transform: translateY(-50%);
+          cursor: pointer;
+          font-size: 18px;
+          user-select: none;
+        }
+    
+        .error-message {
+          color: red;
+          margin-bottom: 20px;
+          font-size: 14px;
+          display: none;
+        }
+    
+        @media (max-width: 480px) {
+          .login-container {
+            padding: 30px 20px;
+          }
+        }
+      </style>
 </head>
 <body>
 
-    <div class="login-wrapper">
-        <!-- 🔷 Блок логотипа -->
-        <!-- <div class="logo-block">
-            <img src="/static/RealoScan - logo.png" alt="RealoScan Logo">
-        </div> -->
-    
-        <!-- 🔷 Блок формы -->
-        <div class="login-container">
-            <h2>Přihlášení</h2>
-            <div id="error" class="error-message"></div>
-            <form id="loginForm">
-                <input type="text" id="username" placeholder="Uživatelské jméno" required>
-                <input type="password" id="password" placeholder="Heslo" required>
-                <button type="submit">Přihlásit se</button>
-            </form>
+    <header>
+        <div class="container header-container">
+            <div class="logo-container">
+                
+                <img src="/static/RealoScan - logo_up.png" alt="RealoScan logo" class="logo-img">
+                  
+                
+            </div>
+            <!-- <nav>
+                <a href="/favorites" class="admin-btn">Moje oblíbené</a>
+                <button class="admin-btn" id="adminRegisterBtn">Admin registrace</button>
+            </nav> -->
         </div>
-    </div>
+    </header>
+
+    <main>
+        <div class="login-container">
+          <h2>Přihlášení</h2>
+          <div id="error" class="error-message"></div>
+          <form id="loginForm">
+            <input type="text" id="username" placeholder="Uživatelské jméno" required />
+            <div class="password-wrapper">
+              <input type="password" id="password" placeholder="Heslo" required />
+              <span id="togglePassword" class="toggle-password">👁️</span>
+            </div>
+            <button type="submit">Přihlásit se</button>
+          </form>
+        </div>
+    </main>
+
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 RealoScan. Všechna práva vyhrazena.</p>
+        </div>
+    </footer>
 
 <script>
+
+    const passwordInput = document.getElementById("password");
+    const togglePassword = document.getElementById("togglePassword");
+
+    if (passwordInput && togglePassword) {
+      togglePassword.addEventListener("click", () => {
+        const isVisible = passwordInput.type === "text";
+        passwordInput.type = isVisible ? "password" : "text";
+        togglePassword.textContent = isVisible ? "👁️" : "🙈";
+      });
+    }
+
+    
     document.getElementById('loginForm').addEventListener('submit', async function(event) {
         event.preventDefault();
         const username = document.getElementById('username').value;

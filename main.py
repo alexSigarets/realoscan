@@ -32,6 +32,7 @@ from api import apartments  # новый импорт!
 from api import photos
 from api import admin_register
 from api import favorites
+from api import auth_check
 
 app = FastAPI()
 app.state.limiter = limiter
@@ -62,6 +63,7 @@ app.include_router(apartments.router, tags=["Apartments"])
 app.include_router(photos.router)
 app.include_router(admin_register.router)
 app.include_router(favorites.router, tags=["favorites"])
+app.include_router(auth_check.router)
 
 
 
@@ -95,4 +97,8 @@ async def root(request: Request):
 @app.get("/favorites", response_class=HTMLResponse)
 def get_favorites_page(request: Request):
     return templates.TemplateResponse("favorites.html", {"request": request})
+
+@app.get("/similar", response_class=HTMLResponse)
+def get_semelar(request: Request):
+    return templates.TemplateResponse("similar.html", {"request": request})
 

@@ -10,7 +10,7 @@ export function setupSlider(card) {
 
     const showPhoto = (index) => {
         photos.forEach((img, i) => {
-            img.style.display = i === index ? "block" : "none";
+            img.classList.toggle("active", i === index);
         });
     };
 
@@ -28,4 +28,7 @@ export function setupSlider(card) {
             showPhoto(currentIndex);
         });
     }
+
+    // начальное отображение
+    showPhoto(currentIndex);
 }

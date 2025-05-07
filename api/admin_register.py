@@ -14,6 +14,8 @@ templates = Jinja2Templates(directory="templates")
 async def show_registration_form(request: Request, user=Depends(require_admin)):
     return templates.TemplateResponse("admin_register.html", {"request": request})
 
+
+
 @router.post("/admin/register")
 async def register_user(
     email: str = Form(...),

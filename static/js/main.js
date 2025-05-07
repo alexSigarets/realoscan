@@ -12,28 +12,91 @@ import {
     resetFilters
 } from "./filters.js";
 import { renderApartments } from "./apartments.js";
-import { showPreloader, hidePreloader, updateApartmentCount, checkRole, showToast  } from "./utils.js";
+import { showPreloader, hidePreloader, updateApartmentCount, checkRole, showToast, checkTokenOrRedirect  } from "./utils.js";
 import { DistrictId } from './constants.js'; // относительный путь
 import { fetchFavoriteIds } from "./favorites.js";
 
 let allApartments = [];
+const limit = 20;
 
 // Запрос данныз с сервера 
-export async function fetchApartments(favoriteIds) {
-    
+export async function fetchApartments(favoriteIds, page = 1) {
     try {
-        const response = await fetch("apartments/");
+        const offset = (page - 1) * limit;
+        const url = new URL("apartments/", window.location.origin);
+        url.searchParams.set("skip", offset);
+        url.searchParams.set("limit", limit);
+
+        const response = await fetch(url);
         const data = await response.json();
-        
-        renderApartments(data, favoriteIds);
-        updateApartmentCount(data.length); // <--- вызываем обновление счетчика
-        renderActivityFilter(data); // <---- вызыввем заполнение фильтров (Activity)
-        renderRealityTypeFilter(data); // <---- вызыввем заполнение фильтров (RealityType)
-        renderRegionTypeFilter(data); // <---- вызыввем заполнение фильтров (RegionType)
-        allApartments = data
+        const apartments = data.items;
+        const total = data.total;
+
+        // 2. Отрисовываем фильтры
+        // renderActivityFilter(apartments, response);
+        // renderRealityTypeFilter(apartments, response);
+        // renderRegionTypeFilter(apartments, response);
+
+        //Восстановление фильтров после перезагрузки: 
+        restoreFiltersFromURL();
+
+        renderApartments(apartments, favoriteIds);
+        updateApartmentCount(total);
+        renderPagination(total, page, favoriteIds); // 👈 добавим пагинацию
+        allApartments = apartments;
     } catch (error) {
         console.error("Ошибка загрузки квартир:", error);
     }
+}
+
+
+
+// Создаем пагинацию
+export function renderPagination(total, currentPage = 1) {
+    const totalPages = Math.ceil(total / limit);
+    const container = document.getElementById("pagination");
+    container.innerHTML = "";
+
+    for (let i = 1; i <= totalPages; i++) {
+        const btn = document.createElement("button");
+        btn.textContent = i;
+        btn.classList.add("page-btn");
+        if (i === currentPage) btn.classList.add("active");
+
+        btn.addEventListener("click", () => {
+            const url = new URL(window.location.href);
+            url.searchParams.set("page", i);
+            window.history.pushState({}, "", url);
+
+            // 🟢 Вызываем универсальный загрузчик, а не напрямую fetchApartments
+            loadApartmentsForPage(i);
+        });
+
+        container.appendChild(btn);
+    }
+}
+
+
+
+// Создаем фильтры: 
+async function createFilters() {
+
+    try{
+        // 1. Загружаем все квартиры для построения фильтров
+        const response = await fetch("apartments/?skip=0&limit=100000");
+        let data = await response.json();
+        data = data.items;
+        allApartments = data;
+
+        // 2. Отрисовываем фильтры
+        renderActivityFilter(data, response);
+        renderRealityTypeFilter(data, response);
+        renderRegionTypeFilter(data, response);
+    
+    } catch{
+        console.error("Ошибка загрузки квартир:", error);
+    }
+
 }
 
 
@@ -116,34 +179,46 @@ document.getElementById("adminRegisterBtn").addEventListener("click", () => {
 
 
 
-// Запустить при загрузке страницы
-document.addEventListener("DOMContentLoaded", async () => {
+
+//Кнопка logout
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("role");
+    document.cookie = "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;";
+    window.location.href = "/login";
+});
+
+
+
+// Поиск других объявлений от этого же владельца 
+document.addEventListener('click', (event) => {
+    const target = event.target.closest(".search-btn")
+
+    if(!target) return;
+
+    const phone = target.dataset.telefon;
+    const email = target.dataset.email;
+    const id = target.dataset.id;
+
+    const params = new URLSearchParams();
+    if (phone && phone !== "null") params.append("phone", phone);
+    if (email && email !== "null") params.append("email", email);
+    if(id && id !== "null") params.append("id", id)
+
+    window.location.href = `/similar?${params.toString()}`;
+});
+
+
+
+// Проверяем фильтра в URL
+async function loadApartmentsForPage(page = 1) {
     
-
-    checkRole();
-
-    // 1. Загружаем все квартиры для построения фильтров
-    const response = await fetch("apartments/");
-    const data = await response.json();
-    allApartments = data;
-
+    //Восстанавливаем значения select и чекбоксов из куки, если таковые имеются 
+    restoreFiltersFromURL();
+    
+    // Проверяем какие квартиры в избранном
     const favoriteIds = await fetchFavoriteIds();
 
-    if(response.status === 429){
-        showToast('Byl překročen limit požadavků', 'error');
-        renderApartments(data, favoriteIds, response); // Выдаем карточку с ошибкой
-        return
-    }
-    
-    // 2. Отрисовываем фильтры
-    renderActivityFilter(data, response);
-    renderRealityTypeFilter(data, response);
-    renderRegionTypeFilter(data, response);
-
-    // 3. Восстанавливаем значения select и чекбоксов
-    restoreFiltersFromURL();
-
-    // 4. Применяем фильтр, если фильтры есть
     const hasFilters =
         window.location.search.includes("region_id") ||
         window.location.search.includes("activity") ||
@@ -151,16 +226,30 @@ document.addEventListener("DOMContentLoaded", async () => {
         window.location.search.includes("district_id") ||
         window.location.search.includes("prague_id");
 
-    
     if (hasFilters) {
-        
-        await fetchFilteredApartments(favoriteIds); // получаем нужные квартиры
+        await createFilters();
+        restoreFiltersFromURL();
+        await fetchFilteredApartments(favoriteIds, page);
     } else {
-        
-        
-        renderApartments(data, favoriteIds, response); // показываем все
-        updateApartmentCount(data.length);
+        await createFilters();
+        await fetchApartments(favoriteIds, page);
     }
+}
+
+
+
+
+// Запустить при загрузке страницы
+document.addEventListener("DOMContentLoaded", async () => {
+
+    // Проверяем токен
+    await checkTokenOrRedirect();
+
+    // Проверяем роль
+    checkRole();
+
+    // Загружаем нужные данные 
+    await loadApartmentsForPage();
 
     
 });
